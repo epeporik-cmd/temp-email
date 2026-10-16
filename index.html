@@ -3,28 +3,34 @@
 <head><meta name="viewport" content="width=device-width"><title>Email Temp</title></head>
 <body style="font-family:sans-serif;padding:20px">
 <h2>Email Kamu:</h2>
-<h3 id="email">Membuat email...</h3>
-<button onclick="cek()" style="padding:10px">CEK PESAN MASUK</button>
-<pre id="box" style="background:#eee;padding:10px"></pre>
+<h3 id="email">Membuat...</h3>
+<button onclick="cek()" style="padding:10px;font-size:16px">CEK PESAN MASUK</button>
+<button onclick="ganti()" style="padding:10px">GANTI EMAIL</button>
+<pre id="box" style="background:#eee;padding:10px;white-space:pre-wrap;word-break:break-all"></pre>
 <script>
-let token="", myEmail="";
+let login="", domain="";
 async function buat(){
- let d=await fetch("https://api.mail.tm/domains").then(r=>r.json());
- let domain=d["hydra:member"][0].domain;
- let user="user"+Math.floor(Math.random()*99999);
- myEmail=user+"@"+domain;
- let pass="Pass123!!!";
- await fetch("https://api.mail.tm/accounts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({address:myEmail,password:pass})});
- let t=await fetch("https://api.mail.tm/token",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({address:myEmail,password:pass})}).then(r=>r.json());
- token=t.token;
- document.getElementById("email").innerText=myEmail;
+ document.getElementById("email").innerText="Membuat...";
+ let r=await fetch("https://www.1secmail.com/api/v1/?action=genRandomMailbox&count=1").then(x=>x.json());
+ let full=r[0];
+ let parts=full.split("@");
+ login=parts[0]; domain=parts[1];
+ document.getElementById("email").innerText=full;
+ document.getElementById("box").innerText="Email siap. Pakai buat daftar, terus tap CEK PESAN MASUK";
 }
 async function cek(){
- let m=await fetch("https://api.mail.tm/messages",{headers:{Authorization:"Bearer "+token}}).then(r=>r.json());
- document.getElementById("box").innerText=JSON.stringify(m["hydra:member"],null,2);
- if(m["hydra:member"].length==0) document.getElementById("box").innerText="Belum ada pesan, tap lagi 5 detik lagi";
+ document.getElementById("box").innerText="Mengecek...";
+ let r=await fetch(`https://www.1secmail.com/api/v1/?action=getMessages&login=${login}&domain=${domain}`).then(x=>x.json());
+ if(r.length==0){document.getElementById("box").innerText="Belum ada pesan, tunggu 5 detik lagi";return;}
+ let teks="Ditemukan "+r.length+" pesan:\n\n";
+ for(let m of r){
+   let detail=await fetch(`https://www.1secmail.com/api/v1/?action=readMessage&login=${login}&domain=${domain}&id=${m.id}`).then(x=>x.json());
+   teks+=`Dari: ${detail.from}\nSubjek: ${detail.subject}\nIsi: ${detail.body}\n---\n\n`;
+ }
+ document.getElementById("box").innerText=teks;
 }
+function ganti(){buat();}
 buat();
 </script>
 </body>
-  </html>
+</html>
