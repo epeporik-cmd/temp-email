@@ -4,32 +4,43 @@
 <body style="font-family:sans-serif;padding:20px">
 <h2>Email Kamu:</h2>
 <h3 id="email">Membuat...</h3>
-<button onclick="cek()" style="padding:10px;font-size:16px">CEK PESAN MASUK</button>
-<button onclick="ganti()" style="padding:10px">GANTI EMAIL</button>
-<pre id="box" style="background:#eee;padding:10px;white-space:pre-wrap;word-break:break-all"></pre>
+<button onclick="cek()" style="padding:12px">CEK PESAN MASUK</button>
+<button onclick="buat()" style="padding:12px">GANTI EMAIL</button>
+<pre id="box" style="background:#eee;padding:10px;white-space:pre-wrap"></pre>
 <script>
-let login="", domain="";
+let login="", domain="", fullEmail="";
+const proxy = "https://api.allorigins.win/raw?url=";
 async function buat(){
  document.getElementById("email").innerText="Membuat...";
- let r=await fetch("https://www.1secmail.com/api/v1/?action=genRandomMailbox&count=1").then(x=>x.json());
- let full=r[0];
- let parts=full.split("@");
- login=parts[0]; domain=parts[1];
- document.getElementById("email").innerText=full;
- document.getElementById("box").innerText="Email siap. Pakai buat daftar, terus tap CEK PESAN MASUK";
+ document.getElementById("box").innerText="Loading...";
+ try{
+  let url = encodeURIComponent("https://www.1secmail.com/api/v1/?action=genRandomMailbox&count=1");
+  let r = await fetch(proxy+url).then(x=>x.json());
+  fullEmail = r[0];
+  let parts = fullEmail.split("@");
+  login = parts[0]; domain = parts[1];
+  document.getElementById("email").innerText=fullEmail;
+  document.getElementById("box").innerText="Email siap! Copy email di atas buat daftar Lightningminer. Terus tap CEK PESAN MASUK buat lihat kode.";
+ }catch(e){
+  document.getElementById("email").innerText="Gagal, tap GANTI EMAIL lagi";
+  document.getElementById("box").innerText=e;
+ }
 }
 async function cek(){
- document.getElementById("box").innerText="Mengecek...";
- let r=await fetch(`https://www.1secmail.com/api/v1/?action=getMessages&login=${login}&domain=${domain}`).then(x=>x.json());
- if(r.length==0){document.getElementById("box").innerText="Belum ada pesan, tunggu 5 detik lagi";return;}
- let teks="Ditemukan "+r.length+" pesan:\n\n";
- for(let m of r){
-   let detail=await fetch(`https://www.1secmail.com/api/v1/?action=readMessage&login=${login}&domain=${domain}&id=${m.id}`).then(x=>x.json());
-   teks+=`Dari: ${detail.from}\nSubjek: ${detail.subject}\nIsi: ${detail.body}\n---\n\n`;
- }
- document.getElementById("box").innerText=teks;
+ document.getElementById("box").innerText="Mengecek inbox...";
+ try{
+  let url = encodeURIComponent(`https://www.1secmail.com/api/v1/?action=getMessages&login=${login}&domain=${domain}`);
+  let r = await fetch(proxy+url).then(x=>x.json());
+  if(r.length==0){document.getElementById("box").innerText="Belum ada pesan. Tunggu 5 detik, tap lagi.";return;}
+  let teks="";
+  for(let m of r){
+   let url2 = encodeURIComponent(`https://www.1secmail.com/api/v1/?action=readMessage&login=${login}&domain=${domain}&id=${m.id}`);
+   let detail = await fetch(proxy+url2).then(x=>x.json());
+   teks+=`Dari: ${detail.from}\nJudul: ${detail.subject}\n\nIsi:\n${detail.textBody || detail.body}\n\n----------------\n\n`;
+  }
+  document.getElementById("box").innerText=teks;
+ }catch(e){document.getElementById("box").innerText="Error: "+e;}
 }
-function ganti(){buat();}
 buat();
 </script>
 </body>
