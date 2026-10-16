@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="viewport" content="width=device-width"><title>Email Temp</title></head>
+<body style="font-family:sans-serif;padding:20px">
+<h2>Email Kamu:</h2>
+<h3 id="email">Membuat email...</h3>
+<button onclick="cek()" style="padding:10px">CEK PESAN MASUK</button>
+<pre id="box" style="background:#eee;padding:10px"></pre>
+<script>
+let token="", myEmail="";
+async function buat(){
+ let d=await fetch("https://api.mail.tm/domains").then(r=>r.json());
+ let domain=d["hydra:member"][0].domain;
+ let user="user"+Math.floor(Math.random()*99999);
+ myEmail=user+"@"+domain;
+ let pass="Pass123!!!";
+ await fetch("https://api.mail.tm/accounts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({address:myEmail,password:pass})});
+ let t=await fetch("https://api.mail.tm/token",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({address:myEmail,password:pass})}).then(r=>r.json());
+ token=t.token;
+ document.getElementById("email").innerText=myEmail;
+}
+async function cek(){
+ let m=await fetch("https://api.mail.tm/messages",{headers:{Authorization:"Bearer "+token}}).then(r=>r.json());
+ document.getElementById("box").innerText=JSON.stringify(m["hydra:member"],null,2);
+ if(m["hydra:member"].length==0) document.getElementById("box").innerText="Belum ada pesan, tap lagi 5 detik lagi";
+}
+buat();
+</script>
+</body>
+  </html>
